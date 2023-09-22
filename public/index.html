@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>online note</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.0/purify.min.js"></script>
+  </head>
+  <body>
+    <textarea id="noteTextarea" rows="10" cols="40"></textarea>
+
+    <script>
+      const socket = io();
+      const noteTextarea = document.getElementById("noteTextarea");
+
+      socket.on("note", (data) => {
+        const sanitizedData = DOMPurify.sanitize(data)
+        noteTextarea.value = sanitizedData;
+      });
+
+      noteTextarea.addEventListener("input", () => {
+        const updatedNote = noteTextarea.value;
+        socket.emit("note", updatedNote);
+      });
+    </script>
+  </body>
+</html>

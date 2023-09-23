@@ -3,16 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>online note</title>
-    <script src="/socket.io/socket.io.js"></script>
+    <title>快速共編筆記</title>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.0/purify.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
   </head>
-  <body>
-    <textarea id="noteTextarea" rows="10" cols="40"></textarea>
+  <body class="font-mono bg-slate-800 h-screen flex flex-col items-center p-16">
+    
+    <div class="w-[90vw]">
+      <div class="flex p-2 text-gray-100 items-end">
+        <h1 class="text-2xl h-[2rem]">快速共編筆記</h1>
+        <div class="h-full ml-auto flex text-xs">
+          <p>zoom:</p>
+          <p id="roomElement" class="border-r pr-2 mr-2"></p>
+          <button id="copyLinkButton" class="text-red-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>            
+          </button>
+        </div>
+      </div>
+      <textarea id="noteTextarea" class="h-[60vh] w-full p-4 focus:outline-none rounded-xl"></textarea>
+    </div>
+   
 
     <script>
-      const socket = io();
+ 
       const noteTextarea = document.getElementById("noteTextarea");
+      const roomElement = document.getElementById("roomElement");
+      const copyLinkButton = document.getElementById("copyLinkButton");
+
+      const currentUrl = window.location.href;
+
+      const socket = io();
+      
+      const roomIdMatch = currentUrl.match(/\/room\/(\w+)/);
+      if (roomIdMatch) {
+        const roomId = roomIdMatch[1];
+        socket.emit('joinRoom', roomId);
+        roomElement.textContent = roomId;
+      }
 
       socket.on("note", (data) => {
         const sanitizedData = DOMPurify.sanitize(data)
@@ -23,6 +54,24 @@
         const updatedNote = noteTextarea.value;
         socket.emit("note", updatedNote);
       });
+
+      copyLinkButton.addEventListener("click", () => {
+        const currentUrl = window.location.href;
+        // to auto copy, we need to set an invisible textarea and use execCommand
+        const textArea = document.createElement("textarea");
+        textArea.value = currentUrl;
+        textArea.style.position = "absolute";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+
+        // copy
+        textArea.select();
+        document.execCommand('copy');
+
+        document.body.removeChild(textArea);
+
+        alert("連結已複製到剪貼簿，可以分享給別人讓他加入");
+      })
     </script>
   </body>
 </html>
